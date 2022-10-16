@@ -26,6 +26,7 @@ class General(commands.Cog, name="General"):
 
     @staticmethod
     def _get_average_ping(current_ping: int) -> float:
+        """Keeps the ping log table up to date with the latest ping result and return the average scored ping"""
         def average(nums: list) -> float:
             num_sum = 0
             nums_len = len(nums)
@@ -33,6 +34,7 @@ class General(commands.Cog, name="General"):
                 num_sum += int(num)
             return float(num_sum / nums_len)
 
+        # This is just to prevent a FileNotFound error
         try:
             with open("./files/ping_list.txt", mode="r"):
                 pass
@@ -40,16 +42,28 @@ class General(commands.Cog, name="General"):
             with open("./files/ping_list.txt", mode="w"):
                 pass
         finally:
-            with open("./files/ping_list.txt", mode="a") as file:
-                file.write(f"{current_ping}\n")
-
+            # Gets the last ping results and puts them in a list
             with open("./files/ping_list.txt", mode="r") as file:
                 ping_lists = []
                 for line in file:
                     stripped_line = line.strip()
                     ping_lists.append(stripped_line)
 
-                return round(average(ping_lists), 2)
+                ping_lists.append(current_ping)
+
+                result = round(average(ping_lists), 2)
+
+                # Keep only the last 30 ping results to prevent an endless log file
+                ping_lists = ping_lists[-20:]
+
+            # Put these results back into the log file
+            with open("./files/ping_list.txt", mode="w") as file:
+                to_log = ""
+                for log in ping_lists:
+                    to_log += f"{log}\n"
+                file.write(to_log)
+
+            return result
 
     # %flipcoin command
     @commands.hybrid_command(
