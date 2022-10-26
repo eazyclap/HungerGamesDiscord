@@ -44,10 +44,60 @@ class Tribute:
 
 
 class Game:
-    def __init__(self):
+    """
+    Hunger Games class
+    This is the basic class that contains the core game functions
+
+    When started, the game class can be initialized with some data (given at the first class call) to resume an existing game
+    If no data is given, the game will be initialized blank and will wait for a load of event and players
+    This can be done using the load_events_from_json() and load_players_from_json() methods
+
+    The tool provided in the event_manager.py file provides the possibility to auto-create these json files from a csv
+    This allows to create all the necessary data with Google Sheets or Microsoft Excel
+    
+    The json files should respect the following structure:
+
+    EVENTS FILE
+
+    {
+        "events": [
+            {
+                "id":...,
+                "description":...,
+                "probability":...,
+                "tributes involved":...,
+                "severity":...,
+            },
+            ...
+        ]
+    }
+
+
+    PLAYERS FILE
+
+    {
+        "players": [
+            {
+                "name":...,
+                "district":...,
+                "hp":...,
+                "alive":...,    
+            },
+            ...
+        ]
+    }
+    
+    """
+    def __init__(self, **kwargs):
         self._players = []
         self._events = []
 
+        if not kwargs["players_file"] is None:
+            self.load_events_from_json(kwargs["players_file"])
+
+        if not kwargs["events_file"] is None:
+            self.load_players_from_json(kwargs["events_file"])            
+            
     # GAME PROPERTIES PLAYERS AND EVENTS
     @property
     def players(self):
@@ -61,12 +111,38 @@ class Game:
     def _enroll_player(self, player: Tribute):
         self._players.append(player)
 
-    # Internal function to aadd event into the events list
-    def _load_events(self, source: dict):
-        self._events = source.copy()
-
+    # Internal function to add event into the events list
+    def _load_event(self, source: list):
+        for item in source:
+            try:
+                new_event = ArenaEvent(
+                    id=item["id"],
+                    description=item["description"],
+                    probability=item["probability"],
+                    tributes_involved=item["tributes involved"],
+                    severity=item["severity"]
+                )
+            except KeyError:
+                pass
+            else:
+                self._events.append(new_event)
+    # Internal functions to add players into the players list
+    def _load_player(self, source: list):
+        for item in source:
+            try:
+                new_tribute = Tribute(
+                    name=item["name"],
+                    district=item["district"],
+                    hp=item["hp"],
+                    alive=item["alive"]
+                )
+            except KeyError:
+                pass
+            else:
+                self._events.append(new_tribute)
+                
     # Method to load an event list from a json
-    def load_from_json(self, source):
+    def load_events_from_json(self, source):
         if isinstance(source, str):
             try:
                 with open(source, mode="r") as file:
@@ -75,12 +151,28 @@ class Game:
                 pass
             else:
                 try:
-                    self._load_events(data["events"])
+                    self._load_event(data["events"])
                 except KeyError:
                     pass
         elif isinstance(source, dict):
-            self._load_events(source)
+            self._load_event(source)
 
+    # Method to load players from a json
+    def load_players_from_json(self, source):
+        if isinstance(source, str):
+            try:
+                with open(source, mode="r") as file:
+                    data = json.load(file)
+            except FileNotFoundError:
+                pass
+            else:
+                try:
+                    self._load_player(data["players"])
+                except KeyError:
+                    pass
+        elif isinstance(source, dict):
+            self._load_player(source)
+            
     # Method to pull an event from the list
     def pull_event(self, _min: int = 6, _max: int = 12):
         min_events = _min
@@ -93,4 +185,3 @@ class Game:
             decider = random()
             if decider <= new_event.probability:
                 pulled_events.append(new_event)
-    

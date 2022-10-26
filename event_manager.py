@@ -1,6 +1,6 @@
-ìimport json
+import json
 import pandas as pd
-from core_classes import ArenaEvent
+from core_classes import ArenaEvent, Tributes
 
 
 class EventManager:
@@ -37,7 +37,7 @@ class EventManager:
         with open(destination_filepath, mode="w") as file:
             json.dump(output, file, indent=4)
 
-    def create_from_csv(self, filepath, destination_path):
+    def create_event_from_csv(self, filepath, destination_path):
         df = pd.read_csv(filepath)
         for row in range(len(df)):
             self._create_event(
@@ -49,3 +49,9 @@ class EventManager:
             )
 
         self._dump(destination_path)
+
+# START
+if __name__ == "__main__":
+    manager = EventManager()
+    print("EVENTS: Insert the source file path and the destination (all including file names, example: ./data/source.csv)")
+    manager.create_event_from_csv(input("File path: "), input("Destination path: "))
