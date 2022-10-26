@@ -126,6 +126,7 @@ class Game:
                 pass
             else:
                 self._events.append(new_event)
+
     # Internal functions to add players into the players list
     def _load_player(self, source: list):
         for item in source:
@@ -155,7 +156,7 @@ class Game:
                 except KeyError:
                     pass
         elif isinstance(source, dict):
-            self._load_event(source)
+            self._load_event(source["events"])
 
     # Method to load players from a json
     def load_players_from_json(self, source):
@@ -171,7 +172,7 @@ class Game:
                 except KeyError:
                     pass
         elif isinstance(source, dict):
-            self._load_player(source)
+            self._load_player(source["players"])
             
     # Method to pull an event from the list
     def pull_event(self, _min: int = 6, _max: int = 12):
