@@ -1,4 +1,4 @@
-import json
+ìimport json
 import pandas as pd
 from core_classes import ArenaEvent
 

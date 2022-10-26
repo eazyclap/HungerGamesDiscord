@@ -1,5 +1,5 @@
 import json
-import requests
+from random import choice, random, randint
 from dataclasses import dataclass
 
 
@@ -48,6 +48,7 @@ class Game:
         self._players = []
         self._events = []
 
+    # GAME PROPERTIES PLAYERS AND EVENTS
     @property
     def players(self):
         return self._players
@@ -56,12 +57,15 @@ class Game:
     def events(self):
         return self._events
 
-    def enroll_player(self, player: Tribute):
+    # Internal function to enroll player into the players list
+    def _enroll_player(self, player: Tribute):
         self._players.append(player)
 
+    # Internal function to aadd event into the events list
     def _load_events(self, source: dict):
         self._events = source.copy()
 
+    # Method to load an event list from a json
     def load_from_json(self, source):
         if isinstance(source, str):
             try:
@@ -76,3 +80,17 @@ class Game:
                     pass
         elif isinstance(source, dict):
             self._load_events(source)
+
+    # Method to pull an event from the list
+    def pull_event(self, _min: int = 6, _max: int = 12):
+        min_events = _min
+        max_events = _max
+        pulled_events = []
+        for _ in range(randint(min_events, max_events)):
+            new_event = choice(self.events)
+            # Decider -> Random number that will be compared with the base event probability
+            # If the decider is less or equal to the probability the event will be pulled and executed
+            decider = random()
+            if decider <= new_event.probability:
+                pulled_events.append(new_event)
+    
