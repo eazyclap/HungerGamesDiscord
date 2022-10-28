@@ -88,7 +88,7 @@ class Game:
     }
     
     """
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs) -> None:
         self._players = []
         self._events = []
 
@@ -108,11 +108,11 @@ class Game:
         return self._events
 
     # Internal function to enroll player into the players list
-    def _enroll_player(self, player: Tribute):
+    def _enroll_player(self, player: Tribute) -> None:
         self._players.append(player)
 
     # Internal function to add event into the events list
-    def _load_event(self, source: list):
+    def _load_events(self, source: list) -> None:
         for item in source:
             try:
                 new_event = ArenaEvent(
@@ -128,7 +128,7 @@ class Game:
                 self._events.append(new_event)
 
     # Internal functions to add players into the players list
-    def _load_player(self, source: list):
+    def _load_players(self, source: list) -> None:
         for item in source:
             try:
                 new_tribute = Tribute(
@@ -143,7 +143,7 @@ class Game:
                 self._events.append(new_tribute)
                 
     # Method to load an event list from a json
-    def load_events_from_json(self, source):
+    def load_events_from_json(self, source) -> None:
         if isinstance(source, str):
             try:
                 with open(source, mode="r") as file:
@@ -152,14 +152,14 @@ class Game:
                 pass
             else:
                 try:
-                    self._load_event(data["events"])
+                    self._load_events(data["events"])
                 except KeyError:
                     pass
         elif isinstance(source, dict):
-            self._load_event(source["events"])
+            self._load_events(source["events"])
 
     # Method to load players from a json
-    def load_players_from_json(self, source):
+    def load_players_from_json(self, source) -> None:
         if isinstance(source, str):
             try:
                 with open(source, mode="r") as file:
@@ -168,14 +168,24 @@ class Game:
                 pass
             else:
                 try:
-                    self._load_player(data["players"])
+                    self._load_players(data["players"])
                 except KeyError:
                     pass
         elif isinstance(source, dict):
-            self._load_player(source["players"])
+            self._load_players(source["players"])
             
     # Method to pull an event from the list
-    def pull_event(self, _min: int = 6, _max: int = 12):
+    def execute_game(self, _min: int = 6, _max: int = 12) -> None:
+        # Internal function to extract players for an event, makes sure the same player is not extracted twice
+        def _get_event_players(num: int) -> list:
+            players = []
+            for _ in range(num):
+                new_player = choice(self.players)
+                while new_player in players:
+                    new_player = choice(self.players)
+                players.append(new_player)
+            return players
+
         min_events = _min
         max_events = _max
         pulled_events = []
@@ -186,3 +196,10 @@ class Game:
             decider = random()
             if decider <= new_event.probability:
                 pulled_events.append(new_event)
+
+        for event in pulled_events:
+            players_needed = event.tributes_involved
+            event_players = _get_event_players(players_needed)
+            # CONTINUE
+            # EVENT DETAILS PACKED UP AND READY TO BE SENT IN EMBED (Packed up in dictionary?)
+            # TEST CODE
