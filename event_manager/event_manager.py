@@ -5,16 +5,18 @@ from core_classes import ArenaEvent, Tribute
 
 class EventManager:
     """
-    This is an application written to simplify the creation of the events.json file.
-    The create_from_csv() method allows to dump a json file compatible for the core_classes.Game class.
+    This is an application written to simplify the creation of the events.json and players.json files.
+    The create_events_from_csv() and create_players_from_csv() methods allow to create a json file
+    compatible for the core_classes.Game class.
     !! WHEN LOADING A CSV MAKE SURE THAT ALL THE FLOATING POINT NUMBERS USE THE 0.00 FORMAT INSTEAD OF THE 0,00 !!
 
-    This tool provides the possibility to auto-create these json files from a csv
-    This allows to create all the necessary data with Google Sheets or Microsoft Excel
+    This tool provides the possibility to auto-create these json files from a csv.
+    This allows to create all the necessary data with applications like Google Sheets or Microsoft Excel.
     
     The json files should respect the following structure:
 
-    EVENTS FILE
+    EVENTS FILE (Read below!)
+    List that contains event proprieties in dictionary form
 
     {
         "events": [
@@ -29,8 +31,16 @@ class EventManager:
         ]
     }
 
+    Rules for events "description" parameter:
+    - Event description should indicate the position of the players with the relative #TRIBUTE and #OPPRESSED keywords:
+      These keywords specify who executes an action and/or who takes damage from it.
+      Example 1: Tribute kills tribute.         --> #TRIBUTE kills #OPPRESSED.
+      Example 2: Tribute dies from thirst.      --> #OPPRESSED gets a severe cut.
+      Example 3: Tribute sings a song.          --> #TRIBUTE sings a song.
+      Example 4: Tribute talks with tribute.    --> #TRIBUTE talks with #TRIBUTE.
 
     PLAYERS FILE
+    List that contains player proprieties in dictionary form
 
     {
         "players": [
@@ -100,7 +110,7 @@ class EventManager:
             json.dump(output, file, indent=4)
 
     # Method to create an event json file from csv
-    def create_event_from_csv(self, filepath, destination_path):
+    def create_events_from_csv(self, filepath, destination_path):
         df = pd.read_csv(filepath)
         for row in range(len(df)):
             self._create_event(
@@ -114,7 +124,7 @@ class EventManager:
         self._dump_events(destination_path)
 
     # Method to create a player json file from csv
-    def create_player_from_csv(self, filepath, destination_path):
+    def create_players_from_csv(self, filepath, destination_path):
         df = pd.read_csv(filepath)
         for row in range(len(df)):
             self._create_player(
