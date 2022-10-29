@@ -1,0 +1,40 @@
+{
+    "players": [
+        {
+            "name": "Francesco",
+            "district": "58",
+            "hp": 38,
+            "alive": true
+        },
+        {
+            "name": "Michele",
+            "district": "17",
+            "hp": 28,
+            "alive": false
+        },
+        {
+            "name": "Nicole",
+            "district": "53",
+            "hp": 75,
+            "alive": true
+        },
+        {
+            "name": "Lorenzo",
+            "district": "36",
+            "hp": 27,
+            "alive": false
+        },
+        {
+            "name": "Stocazzo",
+            "district": "56",
+            "hp": 67,
+            "alive": true
+        },
+        {
+            "name": "Il Sus",
+            "district": "1",
+            "hp": 32,
+            "alive": false
+        }
+    ]
+}
