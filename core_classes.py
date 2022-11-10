@@ -56,16 +56,21 @@ class Game:
     This allows to create all the necessary data with applications like Google Sheets or Microsoft Excel
     Check event_manager.py for a detailed description.
     """
+
     def __init__(self, **kwargs) -> None:
         self._players = []
         self._events = []
 
-        if not kwargs["players_file"] is None:
+        try:
             self.import_players_from_json(kwargs["players_file"])
+        except KeyError:
+            pass
 
-        if not kwargs["events_file"] is None:
+        try:
             self.import_events_from_json(kwargs["events_file"])
-            
+        except KeyError:
+            pass
+
     # GAME PROPERTIES PLAYERS AND EVENTS
     @property
     def players(self):
@@ -101,7 +106,7 @@ class Game:
                 alive=item["alive"]
             )
             self._players.append(new_tribute)
-                
+
     # Method to load an event list from a json
     def import_events_from_json(self, source) -> None:
         if isinstance(source, str):
@@ -133,35 +138,78 @@ class Game:
                     pass
         elif isinstance(source, dict):
             self._load_players(source["players"])
-            
-    # Method to pull an event from the list
+
+    # Game execution
     def execute_game(self, minimum_events: int = 6, max_events: int = 12):
-        # Internal function to extract players for an event, makes sure the same player is not extracted twice
-        def _get_event_players(num: int) -> list:
+        pulled_events = []
+
+        def _understand_event(event: ArenaEvent):
+            event_actives = event.description.count("#TRIBUTE")
+            event_passives = event.description.count("#OPPRESSED")
+            return event_actives, event_passives
+
+        def _get_passive_players(num: int, event: ArenaEvent) -> list:
             players = []
             for _ in range(num):
                 new_player = choice(self.players)
-                while new_player in players:
+                attempts = 0
+                while new_player in players or not new_player.alive:
+                    attempts += 1
+                    if attempts > 10:
+                        return []
+                    new_player = choice(self.players)
+                players.append(new_player)
+                new_player.hp -= event.severity
+                if new_player.hp < 0:
+                    new_player.alive = False
+                    new_player.hp = 0
+            return players
+
+        def _get_active_players(num: int, passive_players: list) -> list:
+            players = []
+            for _ in range(num):
+                new_player = choice(self.players)
+                attempts = 0
+                while new_player in players or not new_player.alive or new_player in passive_players:
+                    attempts += 1
+                    if attempts > 10:
+                        return []
                     new_player = choice(self.players)
                 players.append(new_player)
             return players
 
-        # Pulled events list
-        pulled_events = []
-        event_players = []
-
-        # In the selected range, pull the necessary events
         for _ in range(randint(minimum_events, max_events)):
             new_event = choice(self.events)
+            actives, passives = _understand_event(new_event)
+            passive_players = _get_passive_players(passives, new_event)
+            active_players = _get_active_players(actives, passive_players)
             # Decider -> Random number that will be compared with the base event probability
             # If the decider is less or equal to the probability the event will be pulled and executed
             decider = random()
-            if decider <= new_event.probability:
-                pulled_events.append(new_event)
+            if decider <= new_event.probability and len(passive_players) > 0 and len(active_players):
+                pulled_events.append(
+                    {
+                        "event": new_event.description,
+                        "active": active_players,
+                        "passive": passive_players
+                    }
+                )
 
         for event in pulled_events:
-            players_needed = event.tributes_involved
-            event_players = _get_event_players(players_needed)
+            for i in range(len(event["active"])):
+                event["event"] = event["event"].replace("#TRIBUTE", event["active"][i].name, i + 1)
 
-        # TESTING PURPOSE - CONTINUE WITH EVENT EXECUTION AND SAVE RELEVANT DATA
-        return f"{len(pulled_events)} events pulled!\n{pulled_events}"
+            for i in range(len(event["passive"])):
+                event["event"] = event["event"].replace("#OPPRESSED", event["passive"][i].name, i + 1)
+
+        print(pulled_events)
+        return
+
+
+if __name__ == "__main__":
+    game = Game(
+        players_file="./testing_files/players_test.json",
+        events_file="./testing_files/events_test.json"
+    )
+
+    game.execute_game()
