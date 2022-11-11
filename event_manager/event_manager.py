@@ -21,7 +21,6 @@ class EventManager:
     {
         "events": [
             {
-                "id":...,
                 "description":...,
                 "probability":...,
                 "tributes involved":...,
@@ -45,6 +44,7 @@ class EventManager:
     {
         "players": [
             {
+                "id":...,
                 "name":...,
                 "district":...,
                 "hp":...,
@@ -61,9 +61,8 @@ class EventManager:
         self.created_players = []
 
     # INTERNAL FUNCTIONS TO LOAD AND EXPORT EVENTS/PLAYERS
-    def _create_event(self, event_id: int, description: str, probability: float, tributes_involved: int, severity: int):
+    def _create_event(self, description: str, probability: float, tributes_involved: int, severity: int):
         new_event = ArenaEvent(
-            id=event_id,
             description=description,
             probability=probability,
             tributes_involved=tributes_involved,
@@ -71,8 +70,9 @@ class EventManager:
         )
         self.created_events.append(new_event)
 
-    def _create_player(self, name: str, district: str, hp: int, alive: bool):
+    def _create_player(self, player_id, name: str, district: str, hp: int, alive: bool):
         new_player = Tribute(
+            id=player_id,
             name=name,
             district=district,
             hp=hp,
@@ -85,7 +85,6 @@ class EventManager:
 
         for event in self.created_events:
             output["events"].append({
-                "id": int(event.id),
                 "description": str(event.description),
                 "probability": float(event.probability),
                 "tributes involved": int(event.tributes_involved),
@@ -100,6 +99,7 @@ class EventManager:
 
         for tribute in self.created_players:
             output["players"].append({
+                "id": int(tribute.id),
                 "name": str(tribute.name),
                 "district": str(tribute.district),
                 "hp": int(tribute.hp),
@@ -114,7 +114,6 @@ class EventManager:
         df = pd.read_csv(filepath)
         for row in range(len(df)):
             self._create_event(
-                event_id=df["id"][row],
                 description=df["description"][row],
                 probability=df["probability"][row],
                 tributes_involved=df["tributes_involved"][row],
@@ -128,6 +127,7 @@ class EventManager:
         df = pd.read_csv(filepath)
         for row in range(len(df)):
             self._create_player(
+                player_id=df["id"][row],
                 name=df["name"][row],
                 district=df["district"][row],
                 hp=df["hp"][row],

@@ -1,28 +1,24 @@
 {
     "events": [
         {
-            "id": 0,
             "description": "#TRIBUTE kills #OPPRESSED.",
             "probability": 0.3,
             "tributes involved": 2,
             "severity": 100
         },
         {
-            "id": 1,
             "description": "#OPPRESSED gets a severe cut.",
             "probability": 0.15,
             "tributes involved": 1,
             "severity": 60
         },
         {
-            "id": 2,
             "description": "#TRIBUTE sings a song",
             "probability": 0.56,
             "tributes involved": 1,
             "severity": 0
         },
         {
-            "id": 3,
             "description": "#TRIBUTE talks with #TRIBUTE",
             "probability": 0.03,
             "tributes involved": 2,

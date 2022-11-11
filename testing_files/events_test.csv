@@ -1,5 +1,5 @@
-id,description,probability,tributes_involved,severity
-0,#TRIBUTE kills #OPPRESSED.,0.30,2,100
-1,#OPPRESSED gets a severe cut.,0.15,1,60
-2,#TRIBUTE sings a song,0.56,1,0
-3,#TRIBUTE talks with #TRIBUTE,0.03,2,0
+description,probability,tributes_involved,severity
+#TRIBUTE kills #OPPRESSED.,0.30,2,100
+#OPPRESSED gets a severe cut.,0.15,1,60
+#TRIBUTE sings a song,0.56,1,0
+#TRIBUTE talks with #TRIBUTE,0.03,2,0

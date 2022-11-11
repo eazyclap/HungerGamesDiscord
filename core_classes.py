@@ -10,7 +10,7 @@ class ArenaEvent:
     - description:........description of the event.
     - probability:........probability of the event (from 0% to 100%, 0.01 to 1.00).
     - tributes_involved:..number of tributes involved into the event.
-    - severity:...........severity of the event, represents the number of the hp (health points) removed from the player.
+    - severity:...........severity of the event, represents the number of the hp (health points) removed from the player
     ......................check list below for more details
 
 
@@ -21,7 +21,6 @@ class ArenaEvent:
     - 71 to 100:..Severe event..........(eg: Tribute dies)
     """
 
-    id: int
     description: str
     probability: float
     tributes_involved: int
@@ -37,6 +36,7 @@ class Tribute:
     - alive: status of the tribute [alive/dead]
     """
 
+    id: int
     name: str
     district: str
     hp: float = 100
@@ -48,7 +48,8 @@ class Game:
     Hunger Games class
     This is the basic class that contains the core game functions
 
-    When started, the game class can be initialized with some data (given at the first class call) to resume an existing game
+    When started, the game class can be initialized with some data (given at the first class call) to resume an existing
+    game.
     If no data is given, the game will be initialized blank and will wait for a load of event and players
     This can be done using the import_events_from_json() and import_players_from_json() methods
 
@@ -80,6 +81,18 @@ class Game:
     def events(self):
         return self._events
 
+    @property
+    def alive_players(self):
+        alive = []
+        for player in self.players:
+            if player.alive:
+                alive.append(player)
+        return alive
+
+    @property
+    def game_size(self):
+        return len(self.players)
+
     # Internal function to enroll player into the players list (that contains the events data in dict form)
     def _enroll_player(self, player: Tribute) -> None:
         self._players.append(player)
@@ -88,7 +101,6 @@ class Game:
     def _load_events(self, source: list) -> None:
         for item in source:
             new_event = ArenaEvent(
-                id=item["id"],
                 description=item["description"],
                 probability=item["probability"],
                 tributes_involved=item["tributes involved"],
@@ -100,6 +112,7 @@ class Game:
     def _load_players(self, source: list) -> None:
         for item in source:
             new_tribute = Tribute(
+                id=item["id"],
                 name=item["name"],
                 district=item["district"],
                 hp=item["hp"],
@@ -140,53 +153,69 @@ class Game:
             self._load_players(source["players"])
 
     # Game execution
-    def execute_game(self, minimum_events: int = 6, max_events: int = 12):
+    def execute_game(self, minimum_events: int = 8, max_events: int = 12):
+        # Working with copy of players and saving everything else at the end
+
         pulled_events = []
+
+        # TEMPORARY STORAGE OF PLAYERS DATA
+        players_cache = {}
+        for player in self.alive_players:
+            players_cache[player.id] = player
+
+        def local_alive():
+            local_alive_players = []
+            for player in list(players_cache.values()):
+                if player.alive:
+                    local_alive_players.append(player)
+            return local_alive_players
 
         def _understand_event(event: ArenaEvent):
             event_actives = event.description.count("#TRIBUTE")
             event_passives = event.description.count("#OPPRESSED")
             return event_actives, event_passives
 
-        def _get_passive_players(num: int, event: ArenaEvent) -> list:
-            players = []
-            for _ in range(num):
-                new_player = choice(self.players)
-                attempts = 0
-                while new_player in players or not new_player.alive:
-                    attempts += 1
-                    if attempts > 10:
-                        return []
-                    new_player = choice(self.players)
-                players.append(new_player)
-                new_player.hp -= event.severity
-                if new_player.hp < 0:
-                    new_player.alive = False
-                    new_player.hp = 0
-            return players
+        def _get_event_players(event: ArenaEvent):
+            actives, passives = _understand_event(event)
 
-        def _get_active_players(num: int, passive_players: list) -> list:
-            players = []
-            for _ in range(num):
-                new_player = choice(self.players)
-                attempts = 0
-                while new_player in players or not new_player.alive or new_player in passive_players:
-                    attempts += 1
-                    if attempts > 10:
-                        return []
-                    new_player = choice(self.players)
-                players.append(new_player)
-            return players
+            event_active_players = []
+            event_passive_players = []
+
+            # If not enough alive players the event can't be executed
+            if actives + passives > len(local_alive()):
+                return [], []
+
+            # PASSIVE PLAYERS EXTRACTION
+            while len(event_passive_players) < passives:
+                new_player = choice(local_alive())
+                event_passive_players.append(new_player)
+
+            # ACTIVE PLAYERS EXTRACTION
+            while len(event_active_players) < actives:
+                new_player = choice(local_alive())
+                while new_player in event_active_players or new_player in event_passive_players:
+                    new_player = choice(local_alive())
+                event_active_players.append(new_player)
+
+            for player in event_passive_players:
+                player.hp -= event.severity
+                if player.hp < 0:
+                    player.alive = False
+                players_cache[player.id] = player
+
+            return event_active_players, event_passive_players
 
         for _ in range(randint(minimum_events, max_events)):
             new_event = choice(self.events)
-            actives, passives = _understand_event(new_event)
-            passive_players = _get_passive_players(passives, new_event)
-            active_players = _get_active_players(actives, passive_players)
+            active_players, passive_players = _get_event_players(new_event)
+
+            if not active_players or not passive_players:
+                continue
+
             # Decider -> Random number that will be compared with the base event probability
             # If the decider is less or equal to the probability the event will be pulled and executed
             decider = random()
-            if decider <= new_event.probability and passive_players and active_players:
+            if decider <= new_event.probability:
                 pulled_events.append(
                     {
                         "event": new_event.description,
@@ -203,6 +232,7 @@ class Game:
                 event["event"] = event["event"].replace("#OPPRESSED", event["passive"][i].name, i + 1)
 
         print(pulled_events)
+        print(players_cache)
         return
 
 
@@ -211,5 +241,5 @@ if __name__ == "__main__":
         players_file="./testing_files/players_test.json",
         events_file="./testing_files/events_test.json"
     )
-    for _ in range(10):
-        game.execute_game()
+
+    game.execute_game()
