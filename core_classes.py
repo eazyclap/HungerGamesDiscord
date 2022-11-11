@@ -6,7 +6,6 @@ from dataclasses import dataclass
 @dataclass
 class ArenaEvent:
     """
-    - id:.................unique event ID code.
     - description:........description of the event.
     - probability:........probability of the event (from 0% to 100%, 0.01 to 1.00).
     - tributes_involved:..number of tributes involved into the event.
@@ -30,10 +29,11 @@ class ArenaEvent:
 @dataclass
 class Tribute:
     """"
-    - name: name of the tribute
-    - district: district of the tribute, can be any name or number (realism is up to the game master)
-    - hp: health points
-    - alive: status of the tribute [alive/dead]
+    - id:.................unique player ID code.
+    - name:...............name of the tribute
+    - district:...........district of the tribute, can be any name or number (realism is up to the game master)
+    - hp:.................health points
+    - alive:..............status of the tribute [alive/dead]
     """
 
     id: int
@@ -197,12 +197,6 @@ class Game:
                     new_player = choice(local_alive())
                 event_active_players.append(new_player)
 
-            for player in event_passive_players:
-                player.hp -= event.severity
-                if player.hp < 0:
-                    player.alive = False
-                players_cache[player.id] = player
-
             return event_active_players, event_passive_players
 
         for _ in range(randint(minimum_events, max_events)):
@@ -223,6 +217,12 @@ class Game:
                         "passive": passive_players
                     }
                 )
+                for player in passive_players:
+                    player.hp -= new_event.severity
+                    if player.hp < 0:
+                        player.hp = 0
+                        player.alive = False
+                    players_cache[player.id] = player
 
         for event in pulled_events:
             for i in range(len(event["active"])):
