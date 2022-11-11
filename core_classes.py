@@ -118,7 +118,7 @@ class Game:
             else:
                 try:
                     self._load_events(data["events"])
-                except KeyError as e:
+                except KeyError:
                     pass
         elif isinstance(source, dict):
             self._load_events(source["events"])
@@ -186,7 +186,7 @@ class Game:
             # Decider -> Random number that will be compared with the base event probability
             # If the decider is less or equal to the probability the event will be pulled and executed
             decider = random()
-            if decider <= new_event.probability and len(passive_players) > 0 and len(active_players):
+            if decider <= new_event.probability and passive_players and active_players:
                 pulled_events.append(
                     {
                         "event": new_event.description,
@@ -211,5 +211,5 @@ if __name__ == "__main__":
         players_file="./testing_files/players_test.json",
         events_file="./testing_files/events_test.json"
     )
-
-    game.execute_game()
+    for _ in range(10):
+        game.execute_game()
