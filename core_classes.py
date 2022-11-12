@@ -75,14 +75,17 @@ class Game:
     # GAME PROPERTIES PLAYERS AND EVENTS
     @property
     def players(self):
+        """Players proprety"""
         return self._players
 
     @property
     def events(self):
+        """Events proprety"""
         return self._events
 
     @property
     def alive_players(self):
+        """List of alive players"""
         alive = []
         for player in self.players:
             if player.alive:
@@ -91,6 +94,7 @@ class Game:
 
     @property
     def game_size(self):
+        """Number of players in the game"""
         return len(self.players)
 
     # Internal function to enroll player into the players list (that contains the events data in dict form)
@@ -122,6 +126,7 @@ class Game:
 
     # Method to load an event list from a json
     def import_events_from_json(self, source) -> None:
+        """Given a json file in dict or path form, loads the selected events in the game class"""
         if isinstance(source, str):
             try:
                 with open(source, mode="r") as file:
@@ -138,6 +143,7 @@ class Game:
 
     # Method to load players from a json
     def import_players_from_json(self, source) -> None:
+        """Given a json file in dict or path form, loads the selected players in the game class"""
         if isinstance(source, str):
             try:
                 with open(source, mode="r") as file:
@@ -154,8 +160,12 @@ class Game:
 
     # Game execution
     def execute_game(self, minimum_events: int = 8, max_events: int = 12):
+        """
+        This method executes one cycle of the game.
+        A cycle is divided in the event/player pulling and the saving of the elaborated data back into the game json file.
+        The changes are then returned and formatted ready to be printed in the discord embed.
+        """
         # Working with copy of players and saving everything else at the end
-
         pulled_events = []
 
         # TEMPORARY STORAGE OF PLAYERS DATA
