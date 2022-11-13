@@ -175,6 +175,11 @@ class Game:
 
     # Game execution
     def execute_game(self, minimum_events: int = 8, max_events: int = 12) -> list:
+        """
+        This method executes one cycle of the game.
+        A cycle is divided in the event/player pulling and the saving of the elaborated data back into the game json file.
+        The changes are then returned and formatted ready to be printed in the discord embed.
+        """
         # Working with copy of players and saving everything else at the end
 
         pulled_events = []
