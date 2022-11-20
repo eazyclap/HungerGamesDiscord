@@ -58,19 +58,20 @@ class Game:
     Check event_manager.py for a detailed description.
     """
 
-    def __init__(self, game_id: int = 0, **kwargs) -> None:
+    def __init__(self, game_id: int = 0, events_pool: str = None) -> None:
         self._game_id = game_id
-        self._events = []
-
-        try:
-            self.import_events_from_json(kwargs["events_file"])
-        except KeyError:
-            pass
-
-        # Automatically connects to ID if game already created
         self._players = []
+        self._events = []
+        self._event_history = []
+
+        if events_pool:
+            self.import_events_from_json(events_pool)
+
         try:
-            self.import_players_from_json(f"./hunger_games_files/players_{self.id}.json")
+            with open(f"./hunger_games_files/data_{self._game_id}.json", mode="r") as datafile:
+                data = json.load(datafile)
+                self.import_players_from_json(data["players"])
+                self._event_history = data["history"]
         except FileNotFoundError:
             pass
 
@@ -98,6 +99,10 @@ class Game:
     @property
     def id(self):
         return self._game_id
+
+    @property
+    def event_history(self):
+        return self._event_history
 
     # Internal function to enroll player into the players list (that contains the events data in dict form)
     def _enroll_player(self, player: Tribute) -> None:
@@ -128,6 +133,7 @@ class Game:
 
     # Method to load an event list from a json
     def import_events_from_json(self, source) -> None:
+        self._events = []
         if isinstance(source, str):
             try:
                 with open(source, mode="r") as file:
@@ -144,6 +150,7 @@ class Game:
 
     # Method to load players from a json
     def import_players_from_json(self, source) -> None:
+        self._players = []
         if isinstance(source, str):
             try:
                 with open(source, mode="r") as file:
@@ -158,8 +165,11 @@ class Game:
         elif isinstance(source, dict):
             self._load_players(source["players"])
 
-    def save_players_stats(self):
-        output = {"players": []}
+    def save_players_stats(self, latest_events):
+        for index, event in enumerate(latest_events):
+            latest_events[index] = event["event"]
+
+        output = {"id": self.id, "players": [], "history": self.event_history, "latest": latest_events}
 
         for tribute in self.players:
             output["players"].append({
@@ -170,26 +180,15 @@ class Game:
                 "alive": bool(tribute.alive)
             })
 
-        with open(f"./hunger_games_files/players_{self.id}.json", mode="w") as file:
+        output["history"].append(latest_events)
+
+        with open(f"./hunger_games_files/data_{self.id}.json", mode="w") as file:
             json.dump(output, file, indent=4)
 
     # Game execution
     def execute_game(self, minimum_events: int = 8, max_events: int = 12) -> list:
-        # Working with copy of players and saving everything else at the end
 
         pulled_events = []
-
-        # TEMPORARY STORAGE OF PLAYERS DATA
-        players_cache = {}
-        for player in self.alive_players:
-            players_cache[player.id] = player
-
-        def local_alive():
-            local_alive_players = []
-            for player in list(players_cache.values()):
-                if player.alive:
-                    local_alive_players.append(player)
-            return local_alive_players
 
         def _understand_event(event: ArenaEvent):
             event_actives = event.description.count("#TRIBUTE")
@@ -203,19 +202,21 @@ class Game:
             event_passive_players = []
 
             # If not enough alive players the event can't be executed
-            if actives + passives > len(local_alive()):
+            if actives + passives > len(self.alive_players):
                 return [], []
 
             # PASSIVE PLAYERS EXTRACTION
             while len(event_passive_players) < passives:
-                new_player = choice(local_alive())
+                new_player = choice(self.alive_players)
+                while new_player in event_active_players:
+                    new_player = choice(self.alive_players)
                 event_passive_players.append(new_player)
 
             # ACTIVE PLAYERS EXTRACTION
             while len(event_active_players) < actives:
-                new_player = choice(local_alive())
+                new_player = choice(self.alive_players)
                 while new_player in event_active_players or new_player in event_passive_players:
-                    new_player = choice(local_alive())
+                    new_player = choice(self.alive_players)
                 event_active_players.append(new_player)
 
             return event_active_players, event_passive_players
@@ -238,12 +239,16 @@ class Game:
                         "passive": passive_players
                     }
                 )
+
+                # Saving changes to main player stream
                 for player in passive_players:
                     player.hp -= new_event.severity
                     if player.hp < 0:
                         player.hp = 0
                         player.alive = False
-                    players_cache[player.id] = player
+                    for index, entity in enumerate(self._players):
+                        if entity is player:
+                            self._players[index] = player
 
         for event in pulled_events:
             for i in range(len(event["active"])):
@@ -252,22 +257,16 @@ class Game:
             for i in range(len(event["passive"])):
                 event["event"] = event["event"].replace("#OPPRESSED", event["passive"][i].name, i + 1)
 
-        # Updating the main players list with the new cached changes
-        for index in range(len(self._players)):
-            tribute = self._players[index]
-            if tribute.id in players_cache:
-                tribute_id = tribute.id
-                self._players.pop(index)
-                self._players.append(players_cache[tribute_id])
-        self.save_players_stats()
+        self.save_players_stats(pulled_events)
 
         return pulled_events
 
 
 if __name__ == "__main__":
     game = Game(
-        events_file="./testing_files/events_test.json"
+        events_pool="./testing_files/events_test.json"
     )
     game.import_players_from_json("./testing_files/players_test.json")
 
-    print(game.execute_game())
+    for event in game.execute_game():
+        print(f"{event}\n")
